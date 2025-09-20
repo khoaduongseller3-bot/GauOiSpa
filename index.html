@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <title>CRM Nhân viên</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; }
+    .hidden { display: none; }
+    input, button { margin: 5px 0; padding: 8px; width: 250px; }
+    button { background: #4CAF50; color: white; border: none; cursor: pointer; }
+    button:hover { background: #45a049; }
+    table { border-collapse: collapse; margin-top: 20px; width: 100%; }
+    td, th { border: 1px solid #ccc; padding: 6px 10px; }
+    th { background: #f2f2f2; }
+    #status { margin-top: 10px; font-weight: bold; }
+  </style>
+</head>
+<body>
+  <h2>Đăng nhập</h2>
+  <div id="login-box">
+    <input id="username" placeholder="Username"><br>
+    <input id="password" type="password" placeholder="Password"><br>
+    <button onclick="login()">Login</button>
+    <div id="login-msg"></div>
+  </div>
+
+  <div id="dashboard" class="hidden">
+    <h2>Nhập dữ liệu khách hàng</h2>
+    <input id="tenKH" placeholder="Tên khách hàng"><br>
+    <input id="sdt" placeholder="Số điện thoại"><br>
+    <input id="dichVu" placeholder="Tên dịch vụ"><br>
+    <input id="thanhTien" placeholder="Thành tiền"><br>
+    <button onclick="saveData()">Lưu</button>
+    <div id="status"></div>
+
+    <h3>Dữ liệu khách hàng của bạn</h3>
+    <div id="dataTable"></div>
+    <button onclick="logout()">Đăng xuất</button>
+  </div>
+
+  <script>
+    const API_URL = "http://localhost:3000"; // backend Node.js
+
+    async function login() {
+      const username = document.getElementById("username").value;
+      const password = document.getElementById("password").value;
+
+      const res = await fetch(API_URL + "/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username, password })
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        localStorage.setItem("token", data.token);
+        document.getElementById("login-box").classList.add("hidden");
+        document.getElementById("dashboard").classList.remove("hidden");
+        loadData();
+      } else {
+        document.getElementById("login-msg").innerText = "Sai username hoặc password!";
+      }
+    }
+
+    async function saveData() {
+      const token = localStorage.getItem("token");
+      const formData = {
+        tenKH: document.getElementById("tenKH").value,
+        sdt: document.getElementById("sdt").value,
+        dichVu: document.getElementById("dichVu").value,
+        thanhTien: document.getElementById("thanhTien").value
+      };
+
+      const res = await fetch(API_URL + "/save", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": "Bearer " + token
+        },
+        body: JSON.stringify(formData)
+      });
+
+      if (res.ok) {
+        document.getElementById("status").innerText = "✔ Lưu thành công!";
+        loadData();
+      } else {
+        document.getElementById("status").innerText = "❌ Lỗi khi lưu!";
+      }
+    }
+
+    async function loadData() {
+      const token = localStorage.getItem("token");
+      const res = await fetch(API_URL + "/data", {
+        headers: { "Authorization": "Bearer " + token }
+      });
+
+      if (res.ok) {
+        const rows = await res.json();
+        if (rows.length === 0) {
+          document.getElementById("dataTable").innerHTML = "<p>Chưa có dữ liệu.</p>";
+          return;
+        }
+
+        let html = "<table><tr><th>Ngày</th><th>Tên KH</th><th>SĐT</th><th>Dịch vụ</th><th>Thành tiền</th></tr>";
+        rows.forEach(row => {
+          html += "<tr>";
+          row.slice(0,5).forEach(cell => {  // hiển thị 5 cột đầu
+            html += "<td>" + cell + "</td>";
+          });
+          html += "</tr>";
+        });
+        html += "</table>";
+        document.getElementById("dataTable").innerHTML = html;
+      }
+    }
+
+    function logout() {
+      localStorage.removeItem("token");
+      document.getElementById("dashboard").classList.add("hidden");
+      document.getElementById("login-box").classList.remove("hidden");
+    }
+  </script>
+</body>
+</html>

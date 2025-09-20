@@ -23,18 +23,34 @@ app.get("/", (req, res) => {
   res.send("✅ Backend chạy OK trên Render!");
 });
 
-// API thêm dữ liệu
+// ----------------- LOGIN -----------------
+const USERS = [
+  { username: "admin", password: "123456", email: "admin@gmail.com" },
+  { username: "khoao", password: "abc123", email: "khoao@gmail.com" },
+];
+
+app.post("/login", (req, res) => {
+  const { username, password } = req.body;
+  const user = USERS.find(
+    (u) => u.username === username && u.password === password
+  );
+  if (!user) return res.status(401).json({ error: "Sai username hoặc password" });
+
+  res.json({ email: user.email });
+});
+
+// ----------------- API thêm dữ liệu -----------------
 app.post("/add", async (req, res) => {
   try {
-    const { name, phone, service, price, ktv, off, overtime, bonus, tour, email } = req.body;
+    const { name, phone, service, price, email } = req.body;
     const now = new Date().toLocaleString("vi-VN");
 
     await sheets.spreadsheets.values.append({
       spreadsheetId: SHEET_ID,
-      range: "Sheet1!A:K",
+      range: "Sheet1!A:E",
       valueInputOption: "USER_ENTERED",
       requestBody: {
-        values: [[now, name, phone, service, price, ktv, off, overtime, bonus, tour, email]],
+        values: [[now, name, phone, service, price, email]],
       },
     });
 
@@ -44,18 +60,18 @@ app.post("/add", async (req, res) => {
   }
 });
 
-// API lấy dữ liệu theo email
+// ----------------- API lấy dữ liệu theo email -----------------
 app.get("/data/:email", async (req, res) => {
   try {
     const email = req.params.email;
 
     const result = await sheets.spreadsheets.values.get({
       spreadsheetId: SHEET_ID,
-      range: "Sheet1!A:K",
+      range: "Sheet1!A:F",
     });
 
     const rows = result.data.values || [];
-    const filtered = rows.filter((row) => row[10] === email); // cột 11 là Email
+    const filtered = rows.filter((row) => row[5] === email); // cột 6 = email
     res.json(filtered);
   } catch (err) {
     res.status(500).json({ error: err.message });

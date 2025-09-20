@@ -39,8 +39,7 @@
   </div>
 
   <script>
-    // Thay link này = link Render backend của bạn
-    const API_URL = "https://gauoispa-backend.onrender.com";
+    const API_URL = "https://gauoispa.onrender.com"; // backend render của bạn
 
     async function login() {
       const username = document.getElementById("username").value;
@@ -54,7 +53,7 @@
 
       if (res.ok) {
         const data = await res.json();
-        localStorage.setItem("email", data.email);
+        localStorage.setItem("token", data.token); // token = email
         document.getElementById("login-box").classList.add("hidden");
         document.getElementById("dashboard").classList.remove("hidden");
         loadData();
@@ -64,13 +63,13 @@
     }
 
     async function saveData() {
-      const email = localStorage.getItem("email");
+      const token = localStorage.getItem("token");
       const formData = {
         name: document.getElementById("tenKH").value,
         phone: document.getElementById("sdt").value,
         service: document.getElementById("dichVu").value,
         price: document.getElementById("thanhTien").value,
-        email: email
+        email: token
       };
 
       const res = await fetch(API_URL + "/add", {
@@ -88,8 +87,8 @@
     }
 
     async function loadData() {
-      const email = localStorage.getItem("email");
-      const res = await fetch(API_URL + "/data/" + email);
+      const token = localStorage.getItem("token");
+      const res = await fetch(API_URL + "/data/" + token);
 
       if (res.ok) {
         const rows = await res.json();
@@ -101,7 +100,7 @@
         let html = "<table><tr><th>Ngày</th><th>Tên KH</th><th>SĐT</th><th>Dịch vụ</th><th>Thành tiền</th></tr>";
         rows.forEach(row => {
           html += "<tr>";
-          row.slice(0,5).forEach(cell => {
+          row.slice(0,5).forEach(cell => {  // 5 cột đầu
             html += "<td>" + cell + "</td>";
           });
           html += "</tr>";
@@ -112,7 +111,7 @@
     }
 
     function logout() {
-      localStorage.removeItem("email");
+      localStorage.removeItem("token");
       document.getElementById("dashboard").classList.add("hidden");
       document.getElementById("login-box").classList.remove("hidden");
     }

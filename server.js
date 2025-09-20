@@ -18,28 +18,30 @@ const auth = new google.auth.GoogleAuth({
 });
 const sheets = google.sheets({ version: "v4", auth });
 
-// API test
-app.get("/", (req, res) => {
-  res.send("✅ Backend chạy OK trên Render!");
-});
-
-// ----------------- LOGIN -----------------
+// Fake user (bạn muốn thì thêm user khác ở đây)
 const USERS = [
   { username: "admin", password: "123456", email: "admin@gmail.com" },
   { username: "khoao", password: "abc123", email: "khoao@gmail.com" },
 ];
 
+// API test
+app.get("/", (req, res) => {
+  res.send("✅ Backend chạy OK trên Render!");
+});
+
+// API login
 app.post("/login", (req, res) => {
   const { username, password } = req.body;
   const user = USERS.find(
     (u) => u.username === username && u.password === password
   );
-  if (!user) return res.status(401).json({ error: "Sai username hoặc password" });
-
-  res.json({ email: user.email });
+  if (!user) {
+    return res.status(401).json({ error: "Sai username hoặc password" });
+  }
+  res.json({ token: user.email }); // email = token
 });
 
-// ----------------- API thêm dữ liệu -----------------
+// API thêm dữ liệu
 app.post("/add", async (req, res) => {
   try {
     const { name, phone, service, price, email } = req.body;
@@ -60,7 +62,7 @@ app.post("/add", async (req, res) => {
   }
 });
 
-// ----------------- API lấy dữ liệu theo email -----------------
+// API lấy dữ liệu theo email
 app.get("/data/:email", async (req, res) => {
   try {
     const email = req.params.email;
@@ -71,7 +73,7 @@ app.get("/data/:email", async (req, res) => {
     });
 
     const rows = result.data.values || [];
-    const filtered = rows.filter((row) => row[5] === email); // cột 6 = email
+    const filtered = rows.filter((row) => row[5] === email); // cột F = Email
     res.json(filtered);
   } catch (err) {
     res.status(500).json({ error: err.message });

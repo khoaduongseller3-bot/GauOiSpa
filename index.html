@@ -2,26 +2,19 @@
 <html lang="vi">
 <head>
   <meta charset="UTF-8" />
-  <title>GauOiSpa CRM</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Đăng nhập</title>
 </head>
 <body>
   <h2>Đăng nhập</h2>
-  <input type="text" id="username" placeholder="Username" />
-  <input type="password" id="password" placeholder="Password" />
-  <button onclick="login()">Đăng nhập</button>
-
-  <h2>Nhập dữ liệu khách hàng</h2>
-  <input id="name" placeholder="Tên KH" />
-  <input id="phone" placeholder="Số ĐT" />
-  <input id="service" placeholder="Dịch vụ" />
-  <input id="amount" placeholder="Số tiền" />
-  <input id="staff" placeholder="Nhân viên" />
-  <input id="shift" placeholder="Ca" />
-  <input id="note" placeholder="Ghi chú" />
-  <input id="commission" placeholder="Hoa hồng" />
-  <input id="tour" placeholder="Tour" />
-  <input id="email" placeholder="Email" />
-  <button onclick="saveData()">Lưu</button>
+  <form id="loginForm">
+    <label>Tên đăng nhập:</label><br />
+    <input type="text" id="username" name="username" required /><br /><br />
+    <label>Mật khẩu:</label><br />
+    <input type="password" id="password" name="password" required /><br /><br />
+    <button type="submit">Đăng nhập</button>
+  </form>
+  <p id="result"></p>
 
   <script src="script.js"></script>
 </body>

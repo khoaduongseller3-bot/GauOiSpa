@@ -2,125 +2,100 @@
 <html lang="vi">
 <head>
   <meta charset="UTF-8">
-  <title>CRM Nhân viên</title>
+  <title>Đăng nhập CRM</title>
   <style>
     body { font-family: Arial, sans-serif; margin: 20px; }
-    input, button { margin: 5px; padding: 5px; }
-    table { border-collapse: collapse; width: 100%; margin-top: 20px; }
-    th, td { border: 1px solid #ccc; padding: 5px; text-align: left; }
-    th { background: #f2f2f2; }
+    h2 { color: #333; }
+    input { padding: 8px; margin: 5px 0; width: 200px; }
+    button { padding: 8px 16px; background: green; color: white; border: none; cursor: pointer; }
+    button:hover { background: darkgreen; }
+    #formAdd { display: none; margin-top: 20px; }
   </style>
 </head>
 <body>
   <h2>Đăng nhập</h2>
-  <input id="username" placeholder="Username"><br>
-  <input id="password" type="password" placeholder="Password"><br>
+  <input type="text" id="username" placeholder="Username"><br>
+  <input type="password" id="password" placeholder="Password"><br>
   <button onclick="login()">Login</button>
-  <div id="login-msg" style="color:red;"></div>
-  <hr>
 
-  <div id="app" style="display:none;">
-    <h2>Nhập dữ liệu khách hàng</h2>
-    <input id="tenKH" placeholder="Tên khách hàng"><br>
-    <input id="sdt" placeholder="Số điện thoại"><br>
-    <input id="dichVu" placeholder="Tên dịch vụ"><br>
-    <input id="thanhTien" placeholder="Thành tiền"><br>
-    <input id="off" placeholder="OFF"><br>
-    <input id="tangCa" placeholder="Tăng ca"><br>
-    <input id="hoaHongGoi" placeholder="Hoa hồng gói"><br>
-    <input id="tour" placeholder="Tour"><br>
-    <button onclick="saveData()">Lưu</button>
-    <div id="status"></div>
-
-    <h2>Dữ liệu của tôi</h2>
-    <table id="dataTable">
-      <thead>
-        <tr>
-          <th>Ngày</th>
-          <th>Tên KH</th>
-          <th>SĐT</th>
-          <th>Dịch vụ</th>
-          <th>Thành tiền</th>
-          <th>KTV</th>
-          <th>OFF</th>
-          <th>Tăng ca</th>
-          <th>Hoa hồng gói</th>
-          <th>Tour</th>
-          <th>Email</th>
-        </tr>
-      </thead>
-      <tbody></tbody>
-    </table>
+  <div id="formAdd">
+    <h2>Thêm dữ liệu</h2>
+    <input type="text" id="name" placeholder="Tên KH"><br>
+    <input type="text" id="phone" placeholder="SĐT"><br>
+    <input type="text" id="service" placeholder="Tên dịch vụ"><br>
+    <input type="number" id="price" placeholder="Thành tiền"><br>
+    <input type="text" id="ktv" placeholder="KTV"><br>
+    <input type="text" id="off" placeholder="OFF"><br>
+    <input type="text" id="overtime" placeholder="Tăng ca"><br>
+    <input type="text" id="bonus" placeholder="Hoa hồng gói"><br>
+    <input type="text" id="tour" placeholder="Tour"><br>
+    <button onclick="addData()">Thêm</button>
   </div>
 
-<script>
-const API_URL = "https://YOUR-RENDER-APP.onrender.com"; // 🔥 sửa thành link backend Render
+  <script>
+    // ⚡ Đổi URL này thành link Render của bạn
+    const API_BASE = "https://your-render-app.onrender.com";
 
-async function login() {
-  const username = document.getElementById("username").value;
-  const password = document.getElementById("password").value;
+    let userEmail = "";
 
-  const res = await fetch(API_URL + "/login", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ username, password })
-  });
+    async function login() {
+      const username = document.getElementById("username").value;
+      const password = document.getElementById("password").value;
 
-  if (res.ok) {
-    const data = await res.json();
-    localStorage.setItem("email", data.email);
-    document.getElementById("app").style.display = "block";
-    loadData();
-  } else {
-    document.getElementById("login-msg").innerText = "Sai username hoặc password!";
-  }
-}
+      try {
+        const res = await fetch(`${API_BASE}/login`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ username, password })
+        });
 
-async function saveData() {
-  const email = localStorage.getItem("email");
-  const formData = {
-    name: document.getElementById("tenKH").value,
-    phone: document.getElementById("sdt").value,
-    service: document.getElementById("dichVu").value,
-    price: document.getElementById("thanhTien").value,
-    off: document.getElementById("off").value,
-    overtime: document.getElementById("tangCa").value,
-    commission: document.getElementById("hoaHongGoi").value,
-    tour: document.getElementById("tour").value,
-    email: email
-  };
+        if (!res.ok) {
+          alert("❌ Sai tài khoản hoặc mật khẩu!");
+          return;
+        }
 
-  const res = await fetch(API_URL + "/add", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(formData)
-  });
+        const data = await res.json();
+        userEmail = data.email; // lấy email để lưu vào Google Sheet
 
-  if (res.ok) {
-    document.getElementById("status").innerText = "✔ Lưu thành công!";
-    loadData();
-  } else {
-    document.getElementById("status").innerText = "❌ Lỗi khi lưu!";
-  }
-}
+        document.getElementById("formAdd").style.display = "block";
+        alert("✅ Login thành công!");
+      } catch (err) {
+        console.error(err);
+        alert("❌ Không kết nối được server!");
+      }
+    }
 
-async function loadData() {
-  const email = localStorage.getItem("email");
-  const res = await fetch(API_URL + "/data/" + email);
-  const data = await res.json();
+    async function addData() {
+      const payload = {
+        name: document.getElementById("name").value,
+        phone: document.getElementById("phone").value,
+        service: document.getElementById("service").value,
+        price: document.getElementById("price").value,
+        ktv: document.getElementById("ktv").value,
+        off: document.getElementById("off").value,
+        overtime: document.getElementById("overtime").value,
+        bonus: document.getElementById("bonus").value,
+        tour: document.getElementById("tour").value,
+        email: userEmail
+      };
 
-  const tbody = document.querySelector("#dataTable tbody");
-  tbody.innerHTML = "";
-  data.forEach(row => {
-    const tr = document.createElement("tr");
-    row.forEach(cell => {
-      const td = document.createElement("td");
-      td.textContent = cell || "";
-      tr.appendChild(td);
-    });
-    tbody.appendChild(tr);
-  });
-}
-</script>
+      try {
+        const res = await fetch(`${API_BASE}/add`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        });
+
+        if (res.ok) {
+          alert("✅ Thêm dữ liệu thành công!");
+        } else {
+          alert("❌ Lỗi khi thêm dữ liệu!");
+        }
+      } catch (err) {
+        console.error(err);
+        alert("❌ Không kết nối được server!");
+      }
+    }
+  </script>
 </body>
 </html>

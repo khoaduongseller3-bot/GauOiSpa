@@ -1,105 +1,61 @@
-const express = require("express");
-const bodyParser = require("body-parser");
-const cors = require("cors");
-const { google } = require("googleapis");
+import express from "express";
+import fetch from "node-fetch";
+import cors from "cors";
 
 const app = express();
+const PORT = process.env.PORT || 10000;
 
-// ✅ Cho phép frontend GitHub Pages gọi API
-app.use(
-  cors({
-    origin: "https://khoaduongseller3-bot.github.io", // domain GitHub Pages của bạn
-    methods: ["GET", "POST"],
-    allowedHeaders: ["Content-Type", "Authorization"],
-  })
-);
+app.use(cors());
+app.use(express.json());
 
-app.use(bodyParser.json());
+const SHEET_ID = "13xmBj2DCv2n9ys_8jLYip23Q0Kl5TmspbT-4aDJQijE"; // Google Sheet ID
+const API_KEY = "AIzaSyDb5e-iUghYrRxN1-8IFx5b0oYgJ1xPrQo"; // API Key
 
-// ====== CONFIG GOOGLE SHEETS ======
-const SHEET_ID = process.env.SHEET_ID;
-const GOOGLE_CREDENTIALS = JSON.parse(process.env.GOOGLE_CREDENTIALS);
-
-const auth = new google.auth.GoogleAuth({
-  credentials: GOOGLE_CREDENTIALS,
-  scopes: ["https://www.googleapis.com/auth/spreadsheets"],
-});
-const sheets = google.sheets({ version: "v4", auth });
-
-// ====== API TEST ======
-app.get("/", (req, res) => {
-  res.send("✅ Backend chạy OK trên Render!");
-});
-
-// ====== LOGIN API ======
-app.post("/login", (req, res) => {
-  const { username, password } = req.body;
-
-  // Bạn có thể đổi username/password ở đây
-  if (username === "admin" && password === "123456") {
-    res.json({ status: "ok", message: "Đăng nhập thành công" });
-  } else {
-    res.status(401).json({ status: "error", message: "Sai tài khoản/mật khẩu" });
+// Lấy danh sách user từ sheet "Users"
+app.get("/users", async (req, res) => {
+  try {
+    const url = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/Users?key=${API_KEY}`;
+    const response = await fetch(url);
+    const data = await response.json();
+    res.json(data);
+  } catch (error) {
+    res.status(500).json({ error: "Lỗi khi lấy dữ liệu Users" });
   }
 });
 
-// ====== API THÊM DỮ LIỆU ======
+// Lưu dữ liệu vào sheet "Sheet1"
 app.post("/add", async (req, res) => {
   try {
-    const {
-      name,
-      phone,
-      service,
-      price,
-      ktv,
-      off,
-      overtime,
-      bonus,
-      tour,
-      email,
-    } = req.body;
+    const values = [
+      [
+        req.body.name,
+        req.body.phone,
+        req.body.service,
+        req.body.amount,
+        req.body.staff,
+        req.body.shift,
+        req.body.note,
+        req.body.commission,
+        req.body.tour,
+        req.body.email,
+      ],
+    ];
 
-    const now = new Date().toLocaleString("vi-VN");
+    const url = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/Sheet1!A1:append?valueInputOption=USER_ENTERED&key=${API_KEY}`;
 
-    await sheets.spreadsheets.values.append({
-      spreadsheetId: SHEET_ID,
-      range: "Sheet1!A:K",
-      valueInputOption: "USER_ENTERED",
-      requestBody: {
-        values: [
-          [now, name, phone, service, price, ktv, off, overtime, bonus, tour, email],
-        ],
-      },
+    const response = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ values }),
     });
 
-    res.json({ status: "ok", message: "Lưu dữ liệu thành công" });
-  } catch (err) {
-    console.error("❌ Lỗi add data:", err.message);
-    res.status(500).json({ status: "error", message: err.message });
+    const result = await response.json();
+    res.json(result);
+  } catch (error) {
+    res.status(500).json({ error: "Lỗi khi ghi dữ liệu" });
   }
 });
 
-// ====== API LẤY DỮ LIỆU THEO EMAIL ======
-app.get("/data/:email", async (req, res) => {
-  try {
-    const email = req.params.email;
-
-    const result = await sheets.spreadsheets.values.get({
-      spreadsheetId: SHEET_ID,
-      range: "Sheet1!A:K",
-    });
-
-    const rows = result.data.values || [];
-    const filtered = rows.filter((row) => row[10] === email); // cột K = Email
-    res.json(filtered);
-  } catch (err) {
-    console.error("❌ Lỗi get data:", err.message);
-    res.status(500).json({ status: "error", message: err.message });
-  }
-});
-
-// ====== RUN SERVER ======
-const PORT = process.env.PORT || 10000;
 app.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);
 });
